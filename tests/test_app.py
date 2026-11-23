@@ -8,6 +8,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import aggregator as agg
+import config
 from tests.test_aggregator import make_df
 
 
@@ -30,7 +31,8 @@ def test_default_behavior_unchanged_without_defect_types():
 @pytest.fixture(scope="module")
 def view_module(tmp_path_factory):
     """app 모듈은 import 시 제공 데이터를 읽으므로, 데이터가 없으면 건너뛴다."""
-    if not Path("facility_A_log.csv").exists():
+    # 제공 데이터는 설정 파일(config.json)의 input_dir 폴더에 있다
+    if not (Path(config.load_settings([]).input_dir) / "facility_A_log.csv").exists():
         pytest.skip("제공 데이터가 없어 화면 통합 테스트를 건너뜀")
     import app
     return app

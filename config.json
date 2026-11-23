@@ -1,5 +1,5 @@
 {
-  "input_dir": ".",
+  "input_dir": "input",
   "output_dir": "output",
   "process_ms_threshold": 1000,
   "facility_file_prefix": "facility_",

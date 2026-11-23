@@ -14,10 +14,14 @@ pip install -r requirements.txt
 
 ## 데이터 준비
 
-저장소에는 제공 데이터와 처리 결과를 올리지 않았다. 아래 4개 파일을 입력 폴더(기본: 프로젝트 폴더)에 직접 넣는다.
+저장소에는 제공 데이터와 처리 결과를 올리지 않았다. 프로젝트 폴더에 `input/` 폴더를 만들고 아래 4개 파일을 직접 넣는다. 입력 폴더는 `config.json`의 `input_dir`(기본: `input`)이다.
 
 ```
-facility_A_log.csv  facility_B_log.csv  facility_C_log.csv  defect_codes.csv
+input/
+├── defect_codes.csv
+├── facility_A_log.csv
+├── facility_B_log.csv
+└── facility_C_log.csv
 ```
 
 `facility_`로 시작하는 CSV는 파일 이름이나 개수에 상관없이 모두 읽으므로 시설 로그가 늘어도 코드를 고칠 필요가 없다.
@@ -62,7 +66,7 @@ python -m pytest tests -q
 
 | 항목 | 명령 인자 | 기본값 | 설명 |
 |---|---|---|---|
-| `input_dir` | `--input-dir` | `.` | 시설 로그와 불량코드표가 있는 폴더 |
+| `input_dir` | `--input-dir` | `input` | 시설 로그와 불량코드표가 있는 폴더. 설정 파일이 없을 때의 코드 기본값은 `.` |
 | `output_dir` | `--output-dir` | `output` | 결과 저장 폴더. 없으면 자동 생성 |
 | `process_ms_threshold` | `--threshold` | `1000` | 이 값(ms)을 **넘는** 기록을 이상 기록으로 분류 |
 | `facility_file_prefix` | - | `facility_` | 시설 로그 파일 이름 접두어 |
