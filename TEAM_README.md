@@ -86,7 +86,7 @@ config.json + 명령 인자 ──> config            plotter(PNG)  exporter(저
 | **O1** 불량 박스 중심점·면적·위치 분포 | 로그의 `box_x1`, `box_y1`, `box_x2`, `box_y2`가 이미 숫자형으로 읽힌다. 사진 크기는 1280×1024. OK 기록과 D99는 좌표가 비어 있으니 NG이면서 D99가 아닌 행만 쓴다. 계산 함수는 `aggregator.py`에 추가하고 Dash에 표시한다 |
 | **O2** 불량 급증 자동 탐지 (`feat/spike-detection`에서 구현, `spike.py`) | "크게 늘었다"의 기준을 먼저 정하고 문서에 설명해야 한다. 날짜·시설·카메라별 불량률이 평소 대비 얼마나 벗어났는지 보는 방식이 후보다. 데이터에서 이미 보이는 급증은 A-CAM1 11/20(D99 11건), C시설 11/19(치수 초과 21건), B시설 11/18(이물 15건)이다. 구현한 탐지가 이 세 건을 찾는지가 좋은 검증이 된다 |
 | D99를 불량에서 뺀 불량률 | 현재는 D99를 항상 불량에 센다. `Settings`에 옵션을 추가하는 방식이 자연스럽다 |
-| 한글 글꼴이 없는 환경 | `plotter.py`의 `KOREAN_FONT_CANDIDATES` 목록에 글꼴을 추가하거나 글꼴 파일을 동봉하는 방법을 검토한다 |
+| ~~한글 글꼴이 없는 환경~~ | 완료: `fonts/`에 나눔고딕 동봉, 시스템 글꼴이 없을 때 자동 사용 |
 
 ## 7. 작업 방식 (Git)
 
@@ -128,7 +128,7 @@ gh pr create --base main --title "feat: ..." --body-file pr.md
 | Windows에서 `gh`나 `git`을 찾을 수 없음 | 설치 직후 열려 있던 터미널은 PATH가 갱신되지 않는다. 터미널(VS Code)을 완전히 껐다 켠다 |
 | PowerShell에서 `gh pr create --body "..."`가 실패함 | 본문에 큰따옴표가 있으면 인자가 쪼개진다. 본문을 파일로 저장하고 `--body-file`로 넘긴다 |
 | `git add` 때 `LF will be replaced by CRLF` 경고 | Windows의 줄바꿈 경고이며 동작에는 문제 없다 |
-| 그래프의 한글이 네모로 보임 | 한글 글꼴이 없는 환경이다. `plotter.setup_korean_font()`가 `None`을 돌려주는지 확인한다 |
+| 그래프의 한글이 네모로 보임 | 시스템 글꼴과 `fonts/` 동봉 글꼴이 모두 없는 경우다. `fonts/NanumGothic-Regular.ttf`가 있는지, `plotter.setup_korean_font()`가 `None`을 돌려주는지 확인한다 |
 | CSV를 엑셀에서 열면 한글이 깨짐 | 직접 `to_csv`를 쓰지 말고 `exporter.save_csv`(BOM 포함 UTF-8)로 저장한다 |
 | 테스트가 skipped로 나옴 | `input/`에 제공 데이터가 없다 |
 

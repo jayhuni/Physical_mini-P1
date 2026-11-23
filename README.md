@@ -12,7 +12,7 @@ Python 3.15.2, pandas 3.1.1, matplotlib 3.11.2, dash 4.5.1 에서 개발하고 �
 pip install -r requirements.txt
 ```
 
-그래프의 한글은 설치된 한글 글꼴(Malgun Gothic, AppleGothic, NanumGothic 등)을 자동으로 찾아 쓴다. 한글 글꼴이 없는 PC에서는 그래프의 한글이 네모로 보일 수 있다.
+그래프의 한글은 설치된 한글 글꼴(Malgun Gothic, AppleGothic, NanumGothic 등)을 자동으로 찾아 쓴다. 한글 글꼴이 하나도 없는 PC에서는 `fonts/`에 동봉한 나눔고딕(SIL OFL)을 등록해 쓰므로 한글이 깨지지 않는다.
 
 ## 데이터 준비
 
