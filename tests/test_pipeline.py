@@ -88,3 +88,12 @@ def test_f10_korean_font_found_and_png_is_valid(tmp_path):
     table = pd.DataFrame({"facility": ["A시설", "B시설"], "스크래치": [3, 1], "이물": [0, 2]})
     png = plotter.plot_defect_by_facility(table, tmp_path / "a.png")
     assert png.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
+
+
+def test_f10_bundled_font_used_when_no_system_korean_font(tmp_path):
+    # 시스템 한글 글꼴이 하나도 없는 PC를 흉내 낸다: 후보 목록을 없는 이름으로 바꾼다
+    name = plotter.setup_korean_font(candidates=["없는글꼴"])
+    assert name == "NanumGothic"  # fonts/ 에 동봉한 글꼴
+    import matplotlib.pyplot as plt
+    assert plt.rcParams["font.family"] == ["NanumGothic"]
+    plotter.setup_korean_font()  # 다른 테스트를 위해 기본 동작으로 되돌린다

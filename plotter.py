@@ -24,18 +24,33 @@ KOREAN_FONT_CANDIDATES = [
 ]
 
 
-def setup_korean_font() -> str | None:
-    """설치된 한글 글꼴을 찾아 matplotlib 기본 글꼴로 지정하고 이름을 돌려준다.
+# 시스템에 한글 글꼴이 없을 때 쓰는 동봉 글꼴 폴더 (나눔고딕, SIL OFL 라이선스: fonts/OFL.txt)
+BUNDLED_FONT_DIR = Path(__file__).resolve().parent / "fonts"
 
-    한글 글꼴이 하나도 없으면 None. 이 경우 한글이 네모(□)로 보일 수 있다.
+
+def _register_bundled_font(font_dir: Path) -> str | None:
+    """font_dir 안의 글꼴 파일을 matplotlib에 등록하고 첫 글꼴의 이름을 돌려준다."""
+    for path in sorted(Path(font_dir).glob("*.ttf")):
+        font_manager.fontManager.addfont(str(path))
+        return font_manager.FontProperties(fname=str(path)).get_name()
+    return None
+
+
+def setup_korean_font(candidates=None, font_dir: str | Path = BUNDLED_FONT_DIR) -> str | None:
+    """한글 글꼴을 matplotlib 기본 글꼴로 지정하고 이름을 돌려준다.
+
+    1) 설치된 시스템 글꼴(candidates, 기본 KOREAN_FONT_CANDIDATES)을 우선순위대로 찾고
+    2) 하나도 없으면 font_dir 에 동봉한 글꼴을 등록해 쓴다.
+    둘 다 없으면 None. 이 경우 한글이 네모(□)로 보일 수 있다.
     """
+    if candidates is None:
+        candidates = KOREAN_FONT_CANDIDATES
     installed = {f.name for f in font_manager.fontManager.ttflist}
-    for name in KOREAN_FONT_CANDIDATES:
-        if name in installed:
-            plt.rcParams["font.family"] = name
-            break
-    else:
-        name = None
+    name = next((n for n in candidates if n in installed), None)
+    if name is None:
+        name = _register_bundled_font(font_dir)
+    if name is not None:
+        plt.rcParams["font.family"] = name
     # 한글 글꼴은 유니코드 마이너스(−) 기호가 없는 경우가 많아 '-'로 대체한다
     plt.rcParams["axes.unicode_minus"] = False
     return name
