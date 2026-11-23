@@ -41,6 +41,12 @@ class Settings:
     # 판정 불가(D99)를 불량률 집계의 불량으로 셀지. 이상 기록·급증 탐지에는 영향 없음
     count_d99_as_defect: bool = True
 
+    # O1 불량 박스 분석 (box.py). 사진 크기는 명세의 값, 격자는 위치 분포를 볼 칸 수
+    image_width: int = 1280
+    image_height: int = 1024
+    box_grid_cols: int = 4
+    box_grid_rows: int = 4
+
 
 def load_config_file(path: str | Path) -> dict:
     """JSON 설정 파일을 읽어 딕셔너리로 돌려준다. 파일이 없으면 빈 딕셔너리."""
