@@ -1,0 +1,11 @@
+# 저장소에는 항상 LF로 저장한다.
+# Windows(autocrlf=true)와 macOS/Linux 팀원이 섞여 있으면 줄바꿈만 달라져
+# 파일 전체가 바뀐 것처럼 보이고, 같은 파일을 고친 두 PR이 전부 충돌한다. 이를 막는다.
+* text=auto eol=lf
+
+# 바이너리는 줄바꿈 변환과 텍스트 병합 대상에서 뺀다
+*.png binary
+*.jpg binary
+*.ttf binary
+*.otf binary
+*.xlsx binary

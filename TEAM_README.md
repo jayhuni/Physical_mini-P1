@@ -45,7 +45,7 @@ config.json + 명령 인자 ──> config            plotter(PNG)  exporter(저
 
 과제 명세에서 온 규칙이라 어기면 감점 대상이다.
 
-1. **집계 코드는 `aggregator.py`에만 둔다.** `app.py`에 `groupby`, `pivot_table`, `value_counts`를 쓰면 테스트(`test_d7_app_has_no_aggregation_code`)가 실패한다. Dash가 필요한 집계는 `aggregator.py`에 함수를 추가하고 호출한다. 처리 프로그램과 대시보드의 숫자가 어긋나지 않게 하려는 규칙이다.
+1. **집계 코드는 `aggregator.py`와 기능별 분석 모듈(예: `spike.py`)에만 둔다.** ([ADR-001](docs/decisions/ADR-001-feature-modules.md)) `app.py`에 `groupby`, `pivot_table`, `value_counts`를 쓰면 테스트(`test_d7_app_has_no_aggregation_code`)가 실패한다. Dash가 필요한 집계는 `aggregator.py`에 함수를 추가하고 호출한다. 처리 프로그램과 대시보드의 숫자가 어긋나지 않게 하려는 규칙이다.
 2. **대시보드는 로그를 시작할 때 한 번만 읽는다.** 콜백 안에서 CSV를 다시 읽지 않는다.
 3. **파일 이름, 폴더, 기준값을 코드에 적지 않는다.** `config.py`의 `Settings`에 항목을 추가하고 `config.json`에 기본값을 둔다.
 4. **파일 입출력에는 항상 인코딩을 지정한다.** 읽을 때는 `utf-8-sig`, CSV를 저장할 때는 `exporter.save_csv`를 쓴다. 이렇게 해야 엑셀에서 한글이 깨지지 않는다.
@@ -89,6 +89,8 @@ config.json + 명령 인자 ──> config            plotter(PNG)  exporter(저
 | 한글 글꼴이 없는 환경 | `plotter.py`의 `KOREAN_FONT_CANDIDATES` 목록에 글꼴을 추가하거나 글꼴 파일을 동봉하는 방법을 검토한다 |
 
 ## 7. 작업 방식 (Git)
+
+> 충돌 예방 규칙, 충돌 해결 절차, 작업 기록 방법은 [docs/collaboration.md](docs/collaboration.md)에 있다. PR 전에 `bash scripts/sync_check.sh`를 실행한다.
 
 `main`에 직접 push하지 않는다. 기능마다 브랜치를 만들고 PR을 올려 squash merge한다.
 
