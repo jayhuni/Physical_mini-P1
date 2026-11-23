@@ -27,6 +27,12 @@ class Settings:
     defect_codes_file: str = "defect_codes.csv"  # 불량코드표 파일 이름
     csv_encoding: str = "utf-8-sig"             # 저장 CSV 인코딩 (엑셀 한글 호환, S5)
 
+    # F9 조건 필터. 일부만 지정해도 되고, 모두 비워 두면 필터 결과를 만들지 않는다
+    facilities: list[str] | None = None         # 예: ["A시설", "B시설"]
+    start_date: str | None = None               # 예: "2026-11-16"
+    end_date: str | None = None                 # 예: "2026-11-18"
+    defect_types: list[str] | None = None       # 불량 코드(D01) 또는 이름(스크래치)
+
 
 def load_config_file(path: str | Path) -> dict:
     """JSON 설정 파일을 읽어 딕셔너리로 돌려준다. 파일이 없으면 빈 딕셔너리."""
@@ -46,6 +52,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir", help="처리 결과를 저장할 출력 폴더")
     parser.add_argument("--threshold", type=float, dest="process_ms_threshold",
                         help="이상 기록 판단용 처리 시간 기준값(ms)")
+    # F9 조건 필터 (모두 선택 사항)
+    parser.add_argument("--facility", nargs="+", dest="facilities", help="시설 이름 (여러 개 가능)")
+    parser.add_argument("--start-date", help="시작 날짜 (예: 2026-11-16)")
+    parser.add_argument("--end-date", help="끝 날짜 (예: 2026-11-18, 그날 포함)")
+    parser.add_argument("--defect", nargs="+", dest="defect_types", help="불량 코드 또는 이름 (여러 개 가능)")
     return parser
 
 
@@ -55,7 +66,8 @@ def load_settings(argv: list[str] | None = None) -> Settings:
     merged = load_config_file(args.config)
 
     # 명령 인자가 주어졌을 때만 설정 파일 값을 덮어쓴다
-    for name in ("input_dir", "output_dir", "process_ms_threshold"):
+    for name in ("input_dir", "output_dir", "process_ms_threshold",
+                 "facilities", "start_date", "end_date", "defect_types"):
         value = getattr(args, name)
         if value is not None:
             merged[name] = value
