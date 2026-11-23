@@ -19,6 +19,7 @@
 | 2026-11-24 | D99 제외 불량률 옵션 | [devlog/2026-11-24-d99-option.md](devlog/2026-11-24-d99-option.md) |
 | 2026-11-24 | O1 불량 박스 분석 | [devlog/2026-11-24-box-analysis.md](devlog/2026-11-24-box-analysis.md) |
 | 2026-11-24 | 제출 전 점검 도구, 견고성 보강 | [devlog/2026-11-24-final-check.md](devlog/2026-11-24-final-check.md) |
+| 2026-11-24 | 제공 데이터 최종 점검 결과 (O1·O2 실제 수치) | [devlog/2026-11-24-real-data-results.md](devlog/2026-11-24-real-data-results.md) |
 
 ## 설계 결정 목록
 

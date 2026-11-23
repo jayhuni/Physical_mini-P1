@@ -15,3 +15,6 @@ __pycache__/
 
 # 제출용 압축 파일 (scripts/make_submission.py)
 dist/
+
+# 입력 폴더 전체 (제공 데이터 외 파일도 커밋되지 않게)
+input/
