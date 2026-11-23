@@ -118,3 +118,22 @@ def test_f11_text_contains_all_required_items():
     text = agg.format_summary_text(agg.overall_summary(make_df()))
     for label in ("전체 검사 수", "전체 불량 수", "전체 불량률", "불량률 최고 시설", "최다 불량 종류", "이상 기록 수"):
         assert label in text
+
+
+# ---------------------------------------------------------------- D99 제외 옵션
+def test_d99_policy_excluded_keeps_denominator_and_anomalies():
+    # A: 4건 중 NG 2건(D01, D99). D99를 불량에서 빼면 불량 1건, 검사 수는 그대로 4건 -> 25%
+    df = agg.apply_d99_policy(make_df(), count_d99_as_defect=False)
+    s = agg.facility_summary(df).set_index("facility")
+    assert s.loc["A시설", "검사수"] == 4 and s.loc["A시설", "불량수"] == 1
+    assert s.loc["A시설", "불량률(%)"] == 25.0
+    assert agg.overall_summary(df)["defects"] == 2  # 전체 3건 중 D99 1건 제외
+    # 이상 기록은 불량 코드로 판단하므로 D99가 그대로 남는다 (1001ms, D99 1500ms)
+    assert sorted(agg.find_anomalies(df, 1000)["process_ms"]) == [1001, 1500]
+    assert "판정 불가" not in agg.defect_by_facility(df).columns
+
+
+def test_d99_policy_default_changes_nothing():
+    df = make_df()
+    pd.testing.assert_frame_equal(agg.apply_d99_policy(df, count_d99_as_defect=True), df)
+    assert agg.overall_summary(agg.apply_d99_policy(df, True))["defects"] == 3

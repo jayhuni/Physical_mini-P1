@@ -38,6 +38,9 @@ class Settings:
     spike_ratio: float = 3.0                    # 평소 기대 건수의 이 배수 이상
     spike_max_p: float = 0.0001                 # 평소 수준에서 우연히 나올 확률이 이 값 이하
 
+    # 판정 불가(D99)를 불량률 집계의 불량으로 셀지. 이상 기록·급증 탐지에는 영향 없음
+    count_d99_as_defect: bool = True
+
 
 def load_config_file(path: str | Path) -> dict:
     """JSON 설정 파일을 읽어 딕셔너리로 돌려준다. 파일이 없으면 빈 딕셔너리."""
@@ -62,6 +65,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--start-date", help="시작 날짜 (예: 2026-11-16)")
     parser.add_argument("--end-date", help="끝 날짜 (예: 2026-11-18, 그날 포함)")
     parser.add_argument("--defect", nargs="+", dest="defect_types", help="불량 코드 또는 이름 (여러 개 가능)")
+    # 주지 않으면 None으로 남아 설정 파일 값을 쓴다
+    parser.add_argument("--exclude-d99", action="store_const", const=False, dest="count_d99_as_defect",
+                        help="판정 불가(D99)를 불량률 집계에서 불량으로 세지 않음")
     return parser
 
 
@@ -72,7 +78,7 @@ def load_settings(argv: list[str] | None = None) -> Settings:
 
     # 명령 인자가 주어졌을 때만 설정 파일 값을 덮어쓴다
     for name in ("input_dir", "output_dir", "process_ms_threshold",
-                 "facilities", "start_date", "end_date", "defect_types"):
+                 "facilities", "start_date", "end_date", "defect_types", "count_d99_as_defect"):
         value = getattr(args, name)
         if value is not None:
             merged[name] = value
