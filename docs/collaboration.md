@@ -18,6 +18,9 @@ python -m pytest tests -q         # 합친 뒤에도 통과하는지
 
 # ④ PR: 작은 단위로 자주. 오래 열어 둔 PR일수록 충돌이 커진다
 git push -u origin feat/기능이름
+
+# ⑤ 머지: squash merge 후 브랜치를 바로 삭제한다 (gh pr merge --squash --delete-branch)
+#    squash된 브랜치는 main의 조상이 아니어서, 남겨 두면 sync_check가 '작업 중인 브랜치'로 오인한다
 ```
 
 `sync_check.sh`는 작업 트리를 바꾸지 않는다(`git merge-tree`로 가상 병합만 한다). 종료 코드 1이면 충돌이 예상된다는 뜻이다.
@@ -69,6 +72,13 @@ PR을 열 때 이 표를 고치지 말고 팀 채팅이나 PR 설명에 적는 �
 5. `python -m pytest tests -q`와 `python main.py`를 다시 돌린다. 테스트가 깨지면 어딘가 잘못 고른 것이다.
 6. 커밋 메시지에 두 의도를 적는다. 예: `merge: main의 O1 박스 집계 + 이 브랜치의 급증 탐지 출력 둘 다 유지`
 7. **공유 브랜치에 force-push 하지 않는다.**
+
+### 쌓은 브랜치(stacked)를 squash merge 한 뒤의 충돌
+B 브랜치를 A 브랜치 위에 쌓고 A를 squash merge 하면, main에는 A의 내용이 **새 커밋 하나**로 들어간다. B 입장에서는 같은 변경이 다른 커밋으로 양쪽에 있게 되어, 둘 다 새로 만든 파일을 B가 더 고쳤다면 `CONFLICT (add/add)`가 난다.
+
+- 해결: B에서 `git merge origin/main` 후 충돌 파일을 `git diff origin/main HEAD -- <파일>`로 비교한다. B 쪽이 main 쪽 내용을 모두 포함하고 추가만 했다면 B 쪽이 두 의도를 모두 담은 결과다.
+- 예방: 가능하면 쌓지 말고 main에서 바로 브랜치를 딴다. 쌓아야 하면 A가 머지된 직후 바로 B에 main을 merge 한다.
+- 실제 사례: [devlog/2026-11-23-spike-detection.md](devlog/2026-11-23-spike-detection.md)의 협업 메모
 
 ## 6. AI(Claude Code)와 함께 작업할 때 쓰는 스킬
 

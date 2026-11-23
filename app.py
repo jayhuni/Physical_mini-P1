@@ -18,6 +18,7 @@ from dash import Dash, Input, Output, dash_table, dcc, html
 import aggregator
 import config
 import main as pipeline
+import spike
 
 logger = logging.getLogger("vision_app")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -33,6 +34,8 @@ DEFECT_OPTIONS = (
     LOGS.loc[LOGS["result"] == aggregator.DEFECT_RESULT, ["defect_code", "defect_name"]]
     .drop_duplicates().sort_values("defect_code")["defect_name"].tolist()
 )
+# O2 급증은 전체 기간을 '평소'로 삼아 시작할 때 한 번만 계산하고, 화면에서는 조건으로 고르기만 한다
+SPIKES = spike.detect_spikes(LOGS, SETTINGS.spike_min_count, SETTINGS.spike_ratio, SETTINGS.spike_max_p)
 MIN_DATE = LOGS["timestamp"].min().date()
 MAX_DATE = LOGS["timestamp"].max().date()
 
@@ -51,7 +54,7 @@ def empty_figure(message: str) -> go.Figure:
 
 
 def build_view(df: pd.DataFrame, facilities, start_date, end_date, defect_types,
-               threshold_ms: float) -> dict:
+               threshold_ms: float, spikes: pd.DataFrame | None = None) -> dict:
     """선택 조건으로 화면에 보여 줄 모든 값을 계산한다.
 
     Dash 콜백과 분리한 순수 함수라 브라우저 없이 테스트할 수 있다.
@@ -59,11 +62,18 @@ def build_view(df: pd.DataFrame, facilities, start_date, end_date, defect_types,
     """
     base = aggregator.filter_logs(df, facilities, start_date, end_date)
     summary = aggregator.overall_summary(base, threshold_ms, defect_types)
+    # O2: 급증 목록은 선택한 시설·날짜·불량 종류로 고르기만 한다 (평소 기준은 전체 기간)
+    if spikes is None:
+        spikes = spike.detect_spikes(df)
+    picked_spikes = spike.select_spikes(spikes, facilities, start_date, end_date, defect_types)
+    picked_spikes = picked_spikes.astype({"날짜": str, "배수": object}).fillna({"camera_id": "-", "배수": "평소 0건"})
+    picked_spikes["p값"] = picked_spikes["p값"].map(lambda v: f"{v:.1e}")  # 표시용 서식 (CSV는 원래 값)
 
     if base.empty:  # 선택 조건에 맞는 기록이 없는 경우
         msg = "선택한 조건에 맞는 기록이 없습니다"
         return {"summary": summary, "bar": empty_figure(msg), "line": empty_figure(msg),
-                "table": pd.DataFrame(), "anomalies": pd.DataFrame(columns=ANOMALY_COLUMNS)}
+                "table": pd.DataFrame(), "anomalies": pd.DataFrame(columns=ANOMALY_COLUMNS),
+                "spikes": picked_spikes}
 
     # D4 막대그래프: 시설별 불량 종류 건수 (표를 그래프용 긴 형태로 바꾼다)
     table = aggregator.defect_by_facility(base, defect_types)
@@ -88,7 +98,8 @@ def build_view(df: pd.DataFrame, facilities, start_date, end_date, defect_types,
     anomalies["timestamp"] = anomalies["timestamp"].astype(str)
     summary["anomalies"] = len(anomalies)  # 요약 카드의 이상 기록 수를 아래 표의 행 수와 일치시킨다
 
-    return {"summary": summary, "bar": bar, "line": line, "table": table, "anomalies": anomalies}
+    return {"summary": summary, "bar": bar, "line": line, "table": table, "anomalies": anomalies,
+            "spikes": picked_spikes}
 
 
 def summary_card(label: str, value: str) -> html.Div:
@@ -144,25 +155,29 @@ app.layout = html.Div(
         html.Div(id="table"),
         html.H4("이상 기록 목록 (판정 불가 또는 처리 시간 초과)"),
         html.Div(id="anomalies"),
+        html.H4(f"불량 급증 탐지 (O2: 평소 기대 건수의 {SETTINGS.spike_ratio:g}배 이상, "
+                f"{SETTINGS.spike_min_count}건 이상, 우연 확률 p ≤ {SETTINGS.spike_max_p:g})"),
+        html.Div(id="spikes"),
     ])
 
 
 # ------------------------------------------------------------------ 선택이 바뀌면 전부 다시 계산 (D6)
 @app.callback(
     Output("summary", "children"), Output("bar", "figure"), Output("line", "figure"),
-    Output("table", "children"), Output("anomalies", "children"),
+    Output("table", "children"), Output("anomalies", "children"), Output("spikes", "children"),
     Input("facility", "value"), Input("dates", "start_date"), Input("dates", "end_date"),
     Input("defect", "value"))
 def update(facilities, start_date, end_date, defect_types):
     view = build_view(LOGS, facilities, start_date, end_date, defect_types,
-                      SETTINGS.process_ms_threshold)
+                      SETTINGS.process_ms_threshold, SPIKES)
     s = view["summary"]
     cards = [summary_card("검사 수", f"{s['total']:,}"),
              summary_card("불량 수", f"{s['defects']:,}"),
              summary_card("불량률", f"{s['defect_rate']:.2f}%"),
              summary_card("이상 기록", f"{s['anomalies']:,}")]
     return (cards, view["bar"], view["line"],
-            make_table(view["table"], "t-defect"), make_table(view["anomalies"], "t-anomaly"))
+            make_table(view["table"], "t-defect"), make_table(view["anomalies"], "t-anomaly"),
+            make_table(view["spikes"], "t-spike"))
 
 
 if __name__ == "__main__":
