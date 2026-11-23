@@ -39,6 +39,8 @@ for ref in $(git for-each-ref --format='%(refname:short)' refs/remotes/origin); 
   case "$ref" in origin/HEAD|origin|"origin/$base"|"origin/$me") continue ;; esac
   # 이미 base에 병합된 브랜치는 건너뛴다
   if git merge-base --is-ancestor "$ref" "origin/$base"; then continue; fi
+  # 내 브랜치 위에 쌓인 브랜치(내 커밋을 포함)는 겹치는 게 당연하므로 건너뛴다
+  if git merge-base --is-ancestor HEAD "$ref"; then continue; fi
   theirs=$(git diff --name-only "$(git merge-base "$ref" "origin/$base")" "$ref" | sort)
   both=$(comm -12 <(echo "$mine") <(echo "$theirs") | sed '/^$/d')
   if [ -n "$both" ]; then

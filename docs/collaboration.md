@@ -70,6 +70,13 @@ PR을 열 때 이 표를 고치지 말고 팀 채팅이나 PR 설명에 적는 �
 6. 커밋 메시지에 두 의도를 적는다. 예: `merge: main의 O1 박스 집계 + 이 브랜치의 급증 탐지 출력 둘 다 유지`
 7. **공유 브랜치에 force-push 하지 않는다.**
 
+### 쌓은 브랜치(stacked)를 squash merge 한 뒤의 충돌
+B 브랜치를 A 브랜치 위에 쌓고 A를 squash merge 하면, main에는 A의 내용이 **새 커밋 하나**로 들어간다. B 입장에서는 같은 변경이 다른 커밋으로 양쪽에 있게 되어, 둘 다 새로 만든 파일을 B가 더 고쳤다면 `CONFLICT (add/add)`가 난다.
+
+- 해결: B에서 `git merge origin/main` 후 충돌 파일을 `git diff origin/main HEAD -- <파일>`로 비교한다. B 쪽이 main 쪽 내용을 모두 포함하고 추가만 했다면 B 쪽이 두 의도를 모두 담은 결과다.
+- 예방: 가능하면 쌓지 말고 main에서 바로 브랜치를 딴다. 쌓아야 하면 A가 머지된 직후 바로 B에 main을 merge 한다.
+- 실제 사례: [devlog/2026-11-23-spike-detection.md](devlog/2026-11-23-spike-detection.md)의 협업 메모
+
 ## 6. AI(Claude Code)와 함께 작업할 때 쓰는 스킬
 
 `.claude/skills/`에 있는 스킬은 [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode)(MIT)에서 내용을 읽어 확인한 뒤 가져왔다.
