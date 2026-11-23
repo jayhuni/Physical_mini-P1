@@ -33,6 +33,11 @@ class Settings:
     end_date: str | None = None                 # 예: "2026-11-18"
     defect_types: list[str] | None = None       # 불량 코드(D01) 또는 이름(스크래치)
 
+    # O2 불량 급증 탐지 기준 (spike.py, docs/decisions/ADR-002-spike-criterion.md)
+    spike_min_count: int = 5                    # 그날 불량이 이 건수 이상이어야 급증 후보
+    spike_ratio: float = 3.0                    # 평소 기대 건수의 이 배수 이상
+    spike_max_p: float = 0.0001                 # 평소 수준에서 우연히 나올 확률이 이 값 이하
+
 
 def load_config_file(path: str | Path) -> dict:
     """JSON 설정 파일을 읽어 딕셔너리로 돌려준다. 파일이 없으면 빈 딕셔너리."""

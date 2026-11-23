@@ -4,5 +4,8 @@
   "process_ms_threshold": 1000,
   "facility_file_prefix": "facility_",
   "defect_codes_file": "defect_codes.csv",
-  "csv_encoding": "utf-8-sig"
+  "csv_encoding": "utf-8-sig",
+  "spike_min_count": 5,
+  "spike_ratio": 3.0,
+  "spike_max_p": 0.0001
 }

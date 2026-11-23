@@ -15,6 +15,7 @@ import config
 import exporter
 import loader
 import plotter
+import spike
 
 # 출력 파일 이름 (README의 출력 파일 설명과 같은 이름)
 OUT_ALL_LOGS = "all_facility_log.csv"
@@ -28,6 +29,7 @@ OUT_FILTERED = "filtered_logs.csv"
 OUT_SUMMARY = "summary.txt"
 OUT_CHART_DEFECT = "chart_defect_by_facility.png"
 OUT_CHART_DAILY = "chart_daily_defect_rate.png"
+OUT_SPIKES = "spikes.csv"
 
 
 def load_all_logs(settings: config.Settings, logger):
@@ -74,6 +76,12 @@ def run(settings: config.Settings) -> int:
         exporter.save_csv(picked, out_dir / OUT_FILTERED, enc)
         logger.info("조건 필터 결과 %d건 저장: %s", len(picked), OUT_FILTERED)
 
+    # O2: 불량 급증 탐지 (기준은 config의 spike_* 값, 설명은 ADR-002)
+    spikes = spike.detect_spikes(df, settings.spike_min_count, settings.spike_ratio,
+                                 settings.spike_max_p)
+    exporter.save_csv(spikes, out_dir / OUT_SPIKES, enc)
+    logger.info("불량 급증 %d건 탐지: %s", len(spikes), OUT_SPIKES)
+
     # F10: 그래프
     plotter.plot_defect_by_facility(defect_table, out_dir / OUT_CHART_DEFECT)
     plotter.plot_daily_defect_rate(daily, out_dir / OUT_CHART_DAILY)
@@ -81,6 +89,7 @@ def run(settings: config.Settings) -> int:
     # F11: 요약 (파일 저장 + 화면 출력)
     summary_text = aggregator.format_summary_text(
         aggregator.overall_summary(df, settings.process_ms_threshold))
+    summary_text += "\n" + spike.format_spike_text(spikes)  # O2 결과를 요약 끝에 붙인다
     exporter.save_text(summary_text, out_dir / OUT_SUMMARY)
     print(summary_text)
     logger.info("처리 완료. 결과 폴더: %s", out_dir.resolve())
