@@ -65,6 +65,13 @@ python app.py
 python -m pytest tests -q
 ```
 
+### 4) 제출 전 최종 점검과 압축
+
+```bash
+python scripts/final_check.py       # 테스트, 처리, 기대 수치, 급증 3건, 박스 분석, 화면 계산을 한 번에 점검
+python scripts/make_submission.py   # dist/ 에 코드 압축(데이터·결과 제외)과 결과 압축 생성
+```
+
 ## 설정 항목
 
 [config.json](config.json)에 적고, 같은 항목을 명령 인자로 주면 명령 인자가 우선한다.

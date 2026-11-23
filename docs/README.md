@@ -7,6 +7,7 @@
 | [collaboration.md](collaboration.md) | 협업 규칙: 작업 사이클, 충돌 예방, 충돌 해결 절차, 사용 스킬 |
 | [devlog/](devlog/) | 작업(PR)마다 한 파일. 문제 → 판단 → 한 일 → 검증 → 포트폴리오 포인트 |
 | [decisions/](decisions/) | 설계 결정 기록(ADR). 왜 그렇게 했는지 |
+| [presentation.md](presentation.md) | 발표 구성안(10분), 데이터 특이 사항 근거, 예상 질문과 답 |
 
 ## 작업 기록 목록
 
@@ -17,6 +18,7 @@
 | 2026-11-24 | 한글 글꼴 동봉 | [devlog/2026-11-24-bundled-font.md](devlog/2026-11-24-bundled-font.md) |
 | 2026-11-24 | D99 제외 불량률 옵션 | [devlog/2026-11-24-d99-option.md](devlog/2026-11-24-d99-option.md) |
 | 2026-11-24 | O1 불량 박스 분석 | [devlog/2026-11-24-box-analysis.md](devlog/2026-11-24-box-analysis.md) |
+| 2026-11-24 | 제출 전 점검 도구, 견고성 보강 | [devlog/2026-11-24-final-check.md](devlog/2026-11-24-final-check.md) |
 
 ## 설계 결정 목록
 

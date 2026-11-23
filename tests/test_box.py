@@ -132,3 +132,12 @@ def test_provided_data_boxes():
     assert len(boxes) > 0
     assert box.position_grid(boxes, settings.image_width, settings.image_height,
                              settings.box_grid_cols, settings.box_grid_rows)["건수"].sum() == len(boxes) * 2
+
+
+def test_unknown_defect_code_is_not_dropped():
+    # 불량코드표에 없는 코드는 불량 이름이 빈칸이 된다. 그래도 박스 표에서 사라지면 안 된다
+    df = make_df().iloc[[0]].copy()
+    df["defect_code"], df["defect_name"] = "D08", None
+    boxes, _ = box.compute_boxes(df, W, H)
+    out = box.box_by_defect(boxes, W, H)
+    assert len(out) == 1 and out.iloc[0]["defect_code"] == "D08" and out.iloc[0]["건수"] == 1

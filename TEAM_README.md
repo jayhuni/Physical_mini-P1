@@ -13,10 +13,12 @@ pip install -r requirements.txt
 제공 데이터는 저장소에 없다. 프로젝트 폴더에 `input/` 폴더를 만들고 `facility_A_log.csv`, `facility_B_log.csv`, `facility_C_log.csv`, `defect_codes.csv`를 넣는다. 데이터는 팀 내에서 따로 전달받는다.
 
 ```bash
-python -m pytest tests -q   # 38 passed, skipped 0 이면 정상
+python -m pytest tests -q   # 64 passed, skipped 0 이면 정상
 python main.py              # 전체 처리. 결과는 output/ 에 생성
 python app.py               # 대시보드. http://127.0.0.1:8050
 ```
+
+제출 전에는 `python scripts/final_check.py` 한 줄로 테스트·처리·기대 수치·급증 3건·박스 분석·화면 계산을 모두 점검한다(결과는 `output/final_check.txt`). 제출 압축 파일은 `python scripts/make_submission.py`로 만든다(`dist/`).
 
 `pytest` 결과에 skipped가 있으면 `input/`에 데이터가 없다는 뜻이다. 통합 테스트가 실행되지 않은 상태이므로 데이터를 넣고 다시 돌린다.
 
@@ -37,7 +39,7 @@ config.json + 명령 인자 ──> config            plotter(PNG)  exporter(저
 | [exporter.py](exporter.py) | 폴더 생성, CSV·텍스트 저장, 실행 로그 | `save_csv`, `setup_run_logger` |
 | [main.py](main.py) | 위 모듈을 순서대로 묶는 실행 파일 | `load_all_logs`, `run` |
 | [app.py](app.py) | Dash 화면 | `build_view` |
-| [tests/](tests/) | pytest 테스트 38개 | |
+| [tests/](tests/) | pytest 테스트 64개 | |
 
 데이터의 흐름은 하나다. `main.load_all_logs()`가 시설 로그를 읽어 합친 DataFrame(이하 **전체 로그**)을 만들고, 모든 집계 함수는 이 DataFrame을 받는다. 전체 로그에는 원본 14개 열에 `defect_name`, `category`, `severity`가 붙어 있다.
 
