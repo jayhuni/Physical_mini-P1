@@ -12,3 +12,6 @@ __pycache__/
 # 에디터/로컬 설정
 .vscode/
 .claude/settings.local.json
+
+# 제출용 압축 파일 (scripts/make_submission.py)
+dist/

@@ -36,7 +36,8 @@ def compute_boxes(df: pd.DataFrame, width: int, height: int) -> tuple[pd.DataFra
 
 def box_by_defect(boxes: pd.DataFrame, width: int, height: int) -> pd.DataFrame:
     """불량 종류별 건수, 평균 너비·높이·면적, 면적 중앙값, 평균 중심점, 사진 대비 면적 비율(%)."""
-    out = boxes.groupby(["defect_code", "defect_name"], as_index=False).agg(
+    # 코드표에 없는 코드는 이름이 빈칸(NaN)이라, dropna=False로 해야 표에서 사라지지 않는다
+    out = boxes.groupby(["defect_code", "defect_name"], as_index=False, dropna=False).agg(
         건수=("면적", "size"), 평균너비=("너비", "mean"), 평균높이=("높이", "mean"),
         평균면적=("면적", "mean"), 면적중앙값=("면적", "median"),
         평균중심x=("중심x", "mean"), 평균중심y=("중심y", "mean"))
