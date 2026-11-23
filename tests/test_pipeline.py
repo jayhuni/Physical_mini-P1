@@ -97,3 +97,21 @@ def test_f10_bundled_font_used_when_no_system_korean_font(tmp_path):
     import matplotlib.pyplot as plt
     assert plt.rcParams["font.family"] == ["NanumGothic"]
     plotter.setup_korean_font()  # 다른 테스트를 위해 기본 동작으로 되돌린다
+
+
+def test_exclude_d99_cli_changes_rates_not_logs(input_dir, tmp_path):
+    # 입력: A시설 3건(OK, D01, D99), B시설 2건(OK, D03)
+    assert run_with(input_dir, tmp_path / "o", "--exclude-d99") == 0
+    fac = pd.read_csv(tmp_path / "o" / "facility_summary.csv", encoding="utf-8-sig").set_index("facility")
+    assert fac.loc["A시설", "검사수"] == 3 and fac.loc["A시설", "불량수"] == 1
+    # 전체 로그와 이상 기록은 원본 그대로 (D99 행의 result는 NG)
+    logs = pd.read_csv(tmp_path / "o" / "all_facility_log.csv", encoding="utf-8-sig")
+    assert (logs.loc[logs["defect_code"] == "D99", "result"] == "NG").all()
+    assert len(pd.read_csv(tmp_path / "o" / "anomalies.csv", encoding="utf-8-sig")) == 1
+    assert "제외" in (tmp_path / "o" / "summary.txt").read_text(encoding="utf-8")
+
+
+def test_d99_setting_default_and_cli(tmp_path):
+    none = str(tmp_path / "none.json")
+    assert config.load_settings(["--config", none]).count_d99_as_defect is True
+    assert config.load_settings(["--config", none, "--exclude-d99"]).count_d99_as_defect is False

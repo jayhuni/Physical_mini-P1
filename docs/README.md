@@ -15,6 +15,7 @@
 | 2026-11-23 | 협업 환경 구성 (충돌 점검 스크립트, 규칙, 스킬) | [devlog/2026-11-23-collab-setup.md](devlog/2026-11-23-collab-setup.md) |
 | 2026-11-23 | O2 불량 급증 자동 탐지 | [devlog/2026-11-23-spike-detection.md](devlog/2026-11-23-spike-detection.md) |
 | 2026-11-24 | 한글 글꼴 동봉 | [devlog/2026-11-24-bundled-font.md](devlog/2026-11-24-bundled-font.md) |
+| 2026-11-24 | D99 제외 불량률 옵션 | [devlog/2026-11-24-d99-option.md](devlog/2026-11-24-d99-option.md) |
 
 ## 설계 결정 목록
 

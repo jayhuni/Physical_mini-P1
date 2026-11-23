@@ -54,12 +54,15 @@ def empty_figure(message: str) -> go.Figure:
 
 
 def build_view(df: pd.DataFrame, facilities, start_date, end_date, defect_types,
-               threshold_ms: float, spikes: pd.DataFrame | None = None) -> dict:
+               threshold_ms: float, spikes: pd.DataFrame | None = None,
+               exclude_d99: bool = False) -> dict:
     """선택 조건으로 화면에 보여 줄 모든 값을 계산한다.
 
     Dash 콜백과 분리한 순수 함수라 브라우저 없이 테스트할 수 있다.
     시설·날짜는 검사 대상(모집단)을 정하고, 불량 종류는 불량으로 셀 종류만 정한다.
     """
+    # D99를 불량에서 뺄지 (이상 기록은 불량 코드로 판단하므로 영향 없음, 급증 목록은 원본 기준)
+    df = aggregator.apply_d99_policy(df, count_d99_as_defect=not exclude_d99)
     base = aggregator.filter_logs(df, facilities, start_date, end_date)
     summary = aggregator.overall_summary(base, threshold_ms, defect_types)
     # O2: 급증 목록은 선택한 시설·날짜·불량 종류로 고르기만 한다 (평소 기준은 전체 기간)
@@ -144,6 +147,10 @@ app.layout = html.Div(
             html.Div([html.Label("불량 종류"),
                       dcc.Dropdown(id="defect", options=DEFECT_OPTIONS, multi=True,
                                    placeholder="전체 불량 종류", style={"width": "320px"})]),
+            html.Div([html.Label("불량률 기준"),
+                      dcc.Checklist(id="d99", options=[{"label": " 판정 불가(D99)를 불량에서 제외",
+                                                         "value": "exclude"}],
+                                    value=[] if SETTINGS.count_d99_as_defect else ["exclude"])]),
         ]),
         html.Div(id="summary", style={"display": "flex", "gap": "16px", "flexWrap": "wrap",
                                       "marginBottom": "16px"}),
@@ -166,10 +173,10 @@ app.layout = html.Div(
     Output("summary", "children"), Output("bar", "figure"), Output("line", "figure"),
     Output("table", "children"), Output("anomalies", "children"), Output("spikes", "children"),
     Input("facility", "value"), Input("dates", "start_date"), Input("dates", "end_date"),
-    Input("defect", "value"))
-def update(facilities, start_date, end_date, defect_types):
+    Input("defect", "value"), Input("d99", "value"))
+def update(facilities, start_date, end_date, defect_types, d99=None):
     view = build_view(LOGS, facilities, start_date, end_date, defect_types,
-                      SETTINGS.process_ms_threshold, SPIKES)
+                      SETTINGS.process_ms_threshold, SPIKES, exclude_d99="exclude" in (d99 or []))
     s = view["summary"]
     cards = [summary_card("검사 수", f"{s['total']:,}"),
              summary_card("불량 수", f"{s['defects']:,}"),

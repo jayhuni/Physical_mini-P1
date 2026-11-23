@@ -12,11 +12,27 @@ import pandas as pd
 
 DEFECT_RESULT = "NG"
 UNDETERMINABLE_CODE = "D99"  # 판정 불가
+UNDETERMINED_RESULT = "UNDETERMINED"  # D99를 불량에서 뺄 때 쓰는 판정 값 (원본 로그에는 없는 값)
 
 
 def _rate(defects, total):
     """불량률(%)을 소수 둘째 자리까지 계산한다. 검사 수가 0이면 0.0."""
     return (defects / total * 100).where(total > 0, 0.0).round(2)
+
+
+def apply_d99_policy(df: pd.DataFrame, count_d99_as_defect: bool = True) -> pd.DataFrame:
+    """판정 불가(D99)를 불량으로 셀지 정한 로그를 돌려준다.
+
+    True(기본)면 그대로 돌려준다. False면 D99 기록의 result를 UNDETERMINED로 바꾼 복사본을 돌려준다.
+    - 검사 수(분모)에는 남는다: 검사는 수행했기 때문
+    - 불량 수(분자)에서는 빠진다: 불량이라고 판정한 것이 아니기 때문
+    - 이상 기록(F8)은 불량 코드로 판단하므로 그대로 잡힌다
+    원본 df는 바꾸지 않는다.
+    """
+    if count_d99_as_defect:
+        return df
+    is_d99 = df["defect_code"] == UNDETERMINABLE_CODE
+    return df.assign(result=df["result"].where(~is_d99, UNDETERMINED_RESULT))
 
 
 def _is_defect(df: pd.DataFrame, defect_types=None) -> pd.Series:

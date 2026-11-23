@@ -55,17 +55,20 @@ def run(settings: config.Settings) -> int:
         logger.error("처리 중단: %s: %s", type(exc).__name__, exc)
         return 1
 
-    # F2/F3: 전체 시설 로그
+    # F2/F3: 전체 시설 로그 (원본 그대로)
     exporter.save_csv(df, out_dir / OUT_ALL_LOGS, enc)
 
+    # 불량률 집계용 로그: D99를 불량으로 셀지 설정에 따라 정한다 (이상 기록·필터·급증은 원본 df 사용)
+    rated = aggregator.apply_d99_policy(df, settings.count_d99_as_defect)
+
     # F4~F8: 집계 결과
-    exporter.save_csv(aggregator.facility_summary(df), out_dir / OUT_FACILITY, enc)
-    defect_table = aggregator.defect_by_facility(df)
+    exporter.save_csv(aggregator.facility_summary(rated), out_dir / OUT_FACILITY, enc)
+    defect_table = aggregator.defect_by_facility(rated)
     exporter.save_csv(defect_table, out_dir / OUT_DEFECT_BY_FACILITY, enc)
-    exporter.save_csv(aggregator.defect_by_category(df), out_dir / OUT_DEFECT_BY_CATEGORY, enc)
-    daily = aggregator.daily_facility_summary(df)
+    exporter.save_csv(aggregator.defect_by_category(rated), out_dir / OUT_DEFECT_BY_CATEGORY, enc)
+    daily = aggregator.daily_facility_summary(rated)
     exporter.save_csv(daily, out_dir / OUT_DAILY, enc)
-    exporter.save_csv(aggregator.camera_summary(df), out_dir / OUT_CAMERA, enc)
+    exporter.save_csv(aggregator.camera_summary(rated), out_dir / OUT_CAMERA, enc)
     anomalies = aggregator.find_anomalies(df, settings.process_ms_threshold)
     exporter.save_csv(anomalies, out_dir / OUT_ANOMALIES, enc)
 
@@ -88,7 +91,9 @@ def run(settings: config.Settings) -> int:
 
     # F11: 요약 (파일 저장 + 화면 출력)
     summary_text = aggregator.format_summary_text(
-        aggregator.overall_summary(df, settings.process_ms_threshold))
+        aggregator.overall_summary(rated, settings.process_ms_threshold))
+    d99_rule = "불량에 포함" if settings.count_d99_as_defect else "불량에서 제외 (검사 수에는 포함)"
+    summary_text += f"\n판정 불가(D99)    : {d99_rule}"
     summary_text += "\n" + spike.format_spike_text(spikes)  # O2 결과를 요약 끝에 붙인다
     exporter.save_text(summary_text, out_dir / OUT_SUMMARY)
     print(summary_text)
