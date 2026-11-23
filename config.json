@@ -1,0 +1,8 @@
+{
+  "input_dir": ".",
+  "output_dir": "output",
+  "process_ms_threshold": 1000,
+  "facility_file_prefix": "facility_",
+  "defect_codes_file": "defect_codes.csv",
+  "csv_encoding": "utf-8-sig"
+}
