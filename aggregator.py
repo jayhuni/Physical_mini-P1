@@ -19,9 +19,22 @@ def _rate(defects, total):
     return (defects / total * 100).where(total > 0, 0.0).round(2)
 
 
-def _count_table(df: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
-    """keys 단위로 검사 수, 불량 수, 불량률(%)을 계산하는 공통 함수."""
+def _is_defect(df: pd.DataFrame, defect_types=None) -> pd.Series:
+    """불량으로 셀 기록인지 나타내는 True/False 열.
+
+    defect_types를 주면 그 종류(불량 코드 또는 이름)만 불량으로 센다.
+    검사 수(분모)는 그대로 두고 불량 수(분자)만 줄이므로 불량률이 의미를 잃지 않는다.
+    """
     is_ng = df["result"] == DEFECT_RESULT
+    if defect_types:
+        wanted = list(defect_types)
+        is_ng &= df["defect_code"].isin(wanted) | df["defect_name"].isin(wanted)
+    return is_ng
+
+
+def _count_table(df: pd.DataFrame, keys: list[str], defect_types=None) -> pd.DataFrame:
+    """keys 단위로 검사 수, 불량 수, 불량률(%)을 계산하는 공통 함수."""
+    is_ng = _is_defect(df, defect_types)
     grouped = (
         df.assign(_ng=is_ng)
         .groupby(keys, as_index=False)
@@ -33,15 +46,15 @@ def _count_table(df: pd.DataFrame, keys: list[str]) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------- F4
-def facility_summary(df: pd.DataFrame) -> pd.DataFrame:
+def facility_summary(df: pd.DataFrame, defect_types=None) -> pd.DataFrame:
     """시설별 검사 수, 불량 수, 불량률(%) (F4)."""
-    return _count_table(df, ["facility"])
+    return _count_table(df, ["facility"], defect_types)
 
 
 # ---------------------------------------------------------------- F5
-def defect_by_facility(df: pd.DataFrame) -> pd.DataFrame:
+def defect_by_facility(df: pd.DataFrame, defect_types=None) -> pd.DataFrame:
     """시설 × 불량 종류 건수 표 (F5). 값이 없는 칸은 0으로 채운다."""
-    ng = df[df["result"] == DEFECT_RESULT]
+    ng = df[_is_defect(df, defect_types)]
     table = ng.pivot_table(index="facility", columns="defect_name",
                            values="result", aggfunc="size", fill_value=0)
     # 불량이 하나도 없는 시설도 행에 남긴다
@@ -50,24 +63,24 @@ def defect_by_facility(df: pd.DataFrame) -> pd.DataFrame:
     return table.reset_index()
 
 
-def defect_by_category(df: pd.DataFrame) -> pd.DataFrame:
+def defect_by_category(df: pd.DataFrame, defect_types=None) -> pd.DataFrame:
     """불량 분류(외관, 치수, 조립, 시스템)별 건수 표 (F5)."""
-    ng = df[df["result"] == DEFECT_RESULT]
+    ng = df[_is_defect(df, defect_types)]
     out = ng.groupby("category", as_index=False).agg(건수=("result", "size"))
     return out.sort_values("건수", ascending=False, kind="mergesort").reset_index(drop=True)
 
 
 # ---------------------------------------------------------------- F6
-def daily_facility_summary(df: pd.DataFrame) -> pd.DataFrame:
+def daily_facility_summary(df: pd.DataFrame, defect_types=None) -> pd.DataFrame:
     """날짜별·시설별 검사 수와 불량률 (F6)."""
     work = df.assign(date=df["timestamp"].dt.date)
-    return _count_table(work, ["date", "facility"])
+    return _count_table(work, ["date", "facility"], defect_types)
 
 
 # ---------------------------------------------------------------- F7
-def camera_summary(df: pd.DataFrame) -> pd.DataFrame:
+def camera_summary(df: pd.DataFrame, defect_types=None) -> pd.DataFrame:
     """카메라별 검사 수와 불량률 (F7)."""
-    return _count_table(df, ["facility", "camera_id"])
+    return _count_table(df, ["facility", "camera_id"], defect_types)
 
 
 # ---------------------------------------------------------------- F8
@@ -117,10 +130,11 @@ def filter_logs(df: pd.DataFrame, facilities=None, start_date=None, end_date=Non
 
 
 # ---------------------------------------------------------------- F11
-def overall_summary(df: pd.DataFrame, threshold_ms: float = 1000.0) -> dict:
+def overall_summary(df: pd.DataFrame, threshold_ms: float = 1000.0, defect_types=None) -> dict:
     """전체 요약 값을 딕셔너리로 돌려준다 (F11, Dash 요약 숫자(D3)에도 사용)."""
     total = len(df)
-    defects = int((df["result"] == DEFECT_RESULT).sum())
+    is_ng = _is_defect(df, defect_types)
+    defects = int(is_ng.sum())
     summary = {
         "total": total,
         "defects": defects,
@@ -132,10 +146,10 @@ def overall_summary(df: pd.DataFrame, threshold_ms: float = 1000.0) -> dict:
         "anomalies": len(find_anomalies(df, threshold_ms)),
     }
     if total:
-        fac = facility_summary(df).sort_values("불량률(%)", ascending=False, kind="mergesort")
+        fac = facility_summary(df, defect_types).sort_values("불량률(%)", ascending=False, kind="mergesort")
         summary["worst_facility"] = fac.iloc[0]["facility"]
         summary["worst_facility_rate"] = float(fac.iloc[0]["불량률(%)"])
-    counts = df.loc[df["result"] == DEFECT_RESULT, "defect_name"].value_counts()
+    counts = df.loc[is_ng, "defect_name"].value_counts()
     if len(counts):
         summary["top_defect"] = counts.index[0]
         summary["top_defect_count"] = int(counts.iloc[0])
