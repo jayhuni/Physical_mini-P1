@@ -1,0 +1,14 @@
+﻿# 제공 데이터 및 처리 결과는 제출 규정상 저장소에 포함하지 않는다
+facility_*_log.csv
+defect_codes.csv
+output/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# 에디터/로컬 설정
+.vscode/
+.claude/settings.local.json
