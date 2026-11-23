@@ -16,6 +16,7 @@
 | 2026-11-23 | O2 불량 급증 자동 탐지 | [devlog/2026-11-23-spike-detection.md](devlog/2026-11-23-spike-detection.md) |
 | 2026-11-24 | 한글 글꼴 동봉 | [devlog/2026-11-24-bundled-font.md](devlog/2026-11-24-bundled-font.md) |
 | 2026-11-24 | D99 제외 불량률 옵션 | [devlog/2026-11-24-d99-option.md](devlog/2026-11-24-d99-option.md) |
+| 2026-11-24 | O1 불량 박스 분석 | [devlog/2026-11-24-box-analysis.md](devlog/2026-11-24-box-analysis.md) |
 
 ## 설계 결정 목록
 

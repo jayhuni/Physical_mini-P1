@@ -14,6 +14,7 @@ import aggregator
 import config
 import exporter
 import loader
+import box
 import plotter
 import spike
 
@@ -30,6 +31,8 @@ OUT_SUMMARY = "summary.txt"
 OUT_CHART_DEFECT = "chart_defect_by_facility.png"
 OUT_CHART_DAILY = "chart_daily_defect_rate.png"
 OUT_SPIKES = "spikes.csv"
+OUT_BOX_BY_DEFECT = "box_by_defect.csv"
+OUT_BOX_GRID = "box_position_grid.csv"
 
 
 def load_all_logs(settings: config.Settings, logger):
@@ -84,6 +87,17 @@ def run(settings: config.Settings) -> int:
                                  settings.spike_max_p)
     exporter.save_csv(spikes, out_dir / OUT_SPIKES, enc)
     logger.info("불량 급증 %d건 탐지: %s", len(spikes), OUT_SPIKES)
+
+    # O1: 불량 박스 분석. 잘못된 좌표는 분석에서 빼고 실행 로그에 남긴다
+    w, h = settings.image_width, settings.image_height
+    boxes, bad_boxes = box.compute_boxes(df, w, h)
+    exporter.save_csv(box.box_by_defect(boxes, w, h), out_dir / OUT_BOX_BY_DEFECT, enc)
+    exporter.save_csv(box.position_grid(boxes, w, h, settings.box_grid_cols, settings.box_grid_rows),
+                      out_dir / OUT_BOX_GRID, enc)
+    logger.info("불량 박스 %d건 분석: %s, %s", len(boxes), OUT_BOX_BY_DEFECT, OUT_BOX_GRID)
+    if len(bad_boxes):
+        logger.warning("잘못된 박스 좌표 %d건 제외 (사진 밖이거나 x2<=x1, y2<=y1): 일련번호 %s",
+                       len(bad_boxes), ", ".join(bad_boxes["serial_no"].astype(str).head(10)))
 
     # F10: 그래프
     plotter.plot_defect_by_facility(defect_table, out_dir / OUT_CHART_DEFECT)

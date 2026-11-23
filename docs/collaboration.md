@@ -52,10 +52,10 @@ PR을 열 때 이 표를 고치지 말고 팀 채팅이나 PR 설명에 적는 �
 
 | 작업 | 담당 | 브랜치 | 주로 고치는 파일 |
 |---|---|---|---|
-| O2 불량 급증 탐지 | jangjunseo05 | `feat/spike-detection` | `spike.py`(신규), `main.py`, `app.py`, `config.py` |
-| O1 불량 박스 분석 | (미정) | | |
-| D99 제외 불량률 옵션 | (미정) | | |
-| 한글 글꼴 동봉 | (미정) | | |
+| O2 불량 급증 탐지 | jangjunseo05 | `feat/spike-detection` (완료, #9) | `spike.py`(신규), `main.py`, `app.py`, `config.py` |
+| O1 불량 박스 분석 | jangjunseo05 | `feat/box-analysis` (완료) | `box.py`(신규), `main.py`, `app.py`, `config.py` |
+| D99 제외 불량률 옵션 | jangjunseo05 | `feat/d99-option` (완료, #11) | `aggregator.py`, `main.py`, `app.py`, `config.py` |
+| 한글 글꼴 동봉 | jangjunseo05 | `feat/bundled-korean-font` (완료, #10) | `plotter.py`, `fonts/` |
 
 ## 4. 작업 기록 (docs/devlog)
 

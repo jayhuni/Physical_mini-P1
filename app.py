@@ -16,6 +16,7 @@ import plotly.graph_objects as go
 from dash import Dash, Input, Output, dash_table, dcc, html
 
 import aggregator
+import box
 import config
 import main as pipeline
 import spike
@@ -55,7 +56,7 @@ def empty_figure(message: str) -> go.Figure:
 
 def build_view(df: pd.DataFrame, facilities, start_date, end_date, defect_types,
                threshold_ms: float, spikes: pd.DataFrame | None = None,
-               exclude_d99: bool = False) -> dict:
+               exclude_d99: bool = False, settings: config.Settings | None = None) -> dict:
     """선택 조건으로 화면에 보여 줄 모든 값을 계산한다.
 
     Dash 콜백과 분리한 순수 함수라 브라우저 없이 테스트할 수 있다.
@@ -71,12 +72,15 @@ def build_view(df: pd.DataFrame, facilities, start_date, end_date, defect_types,
     picked_spikes = spike.select_spikes(spikes, facilities, start_date, end_date, defect_types)
     picked_spikes = picked_spikes.astype({"날짜": str, "배수": object}).fillna({"camera_id": "-", "배수": "평소 0건"})
     picked_spikes["p값"] = picked_spikes["p값"].map(lambda v: f"{v:.1e}")  # 표시용 서식 (CSV는 원래 값)
+    # O1: 선택한 시설·날짜·불량 종류의 불량 박스 분석
+    box_view = build_box_view(aggregator.filter_logs(base, defect_types=defect_types),
+                              settings or config.Settings())
 
     if base.empty:  # 선택 조건에 맞는 기록이 없는 경우
         msg = "선택한 조건에 맞는 기록이 없습니다"
         return {"summary": summary, "bar": empty_figure(msg), "line": empty_figure(msg),
                 "table": pd.DataFrame(), "anomalies": pd.DataFrame(columns=ANOMALY_COLUMNS),
-                "spikes": picked_spikes}
+                "spikes": picked_spikes, **box_view}
 
     # D4 막대그래프: 시설별 불량 종류 건수 (표를 그래프용 긴 형태로 바꾼다)
     table = aggregator.defect_by_facility(base, defect_types)
@@ -102,7 +106,35 @@ def build_view(df: pd.DataFrame, facilities, start_date, end_date, defect_types,
     summary["anomalies"] = len(anomalies)  # 요약 카드의 이상 기록 수를 아래 표의 행 수와 일치시킨다
 
     return {"summary": summary, "bar": bar, "line": line, "table": table, "anomalies": anomalies,
-            "spikes": picked_spikes}
+            "spikes": picked_spikes, **box_view}
+
+
+def build_box_view(df: pd.DataFrame, s: config.Settings) -> dict:
+    """O1 화면 요소: 불량 종류별 박스 크기 표, 위치 분포 히트맵, 중심점 산점도. 계산은 box.py가 한다."""
+    w, h = s.image_width, s.image_height
+    boxes, _ = box.compute_boxes(df, w, h)
+    table = box.box_by_defect(boxes, w, h)
+    if boxes.empty:
+        msg = "선택한 조건에 해당하는 불량 박스가 없습니다"
+        return {"box_table": table, "box_heatmap": empty_figure(msg), "box_scatter": empty_figure(msg)}
+
+    grid = box.position_grid(boxes, w, h, s.box_grid_cols, s.box_grid_rows)
+    matrix = box.position_matrix(grid)
+    cells = grid[grid["defect_name"] == box.ALL_DEFECTS]
+    x_labels = [f"{a}~{b}" for a, b in cells[cells["행"] == 0][["x시작", "x끝"]].itertuples(index=False)]
+    y_labels = [f"{a}~{b}" for a, b in cells[cells["열"] == 0][["y시작", "y끝"]].itertuples(index=False)]
+    heatmap = go.Figure(go.Heatmap(z=matrix.to_numpy(), x=x_labels, y=y_labels, colorscale="Reds",
+                                   texttemplate="%{z}", hovertemplate="x %{x}, y %{y}: %{z}건<extra></extra>"))
+    heatmap.update_layout(title="사진 안 불량 위치 분포 (박스 중심, 칸별 건수)",
+                          xaxis_title="x (px)", yaxis_title="y (px)")
+    heatmap.update_yaxes(autorange="reversed")  # 사진 좌표: 위쪽이 y=0
+
+    scatter = px.scatter(boxes, x="중심x", y="중심y", color="defect_name", size="면적", size_max=14,
+                         hover_data=["facility", "camera_id", "serial_no", "너비", "높이"],
+                         labels={"defect_name": "불량 종류"}, title="불량 박스 중심점 (크기 = 면적)")
+    scatter.update_xaxes(range=[0, w])
+    scatter.update_yaxes(range=[h, 0], scaleanchor="x")  # 위쪽이 y=0, 가로세로 비율 유지
+    return {"box_table": table, "box_heatmap": heatmap, "box_scatter": scatter}
 
 
 def summary_card(label: str, value: str) -> html.Div:
@@ -165,6 +197,12 @@ app.layout = html.Div(
         html.H4(f"불량 급증 탐지 (O2: 평소 기대 건수의 {SETTINGS.spike_ratio:g}배 이상, "
                 f"{SETTINGS.spike_min_count}건 이상, 우연 확률 p ≤ {SETTINGS.spike_max_p:g})"),
         html.Div(id="spikes"),
+        html.H4("불량 박스 분석 (O1: 판정 불가·좌표 없는 기록 제외)"),
+        html.Div(id="box-table"),
+        html.Div(style={"display": "flex", "gap": "16px", "flexWrap": "wrap"}, children=[
+            html.Div(dcc.Graph(id="box-heatmap"), style={"flex": "1 1 480px"}),
+            html.Div(dcc.Graph(id="box-scatter"), style={"flex": "1 1 480px"}),
+        ]),
     ])
 
 
@@ -172,11 +210,13 @@ app.layout = html.Div(
 @app.callback(
     Output("summary", "children"), Output("bar", "figure"), Output("line", "figure"),
     Output("table", "children"), Output("anomalies", "children"), Output("spikes", "children"),
+    Output("box-table", "children"), Output("box-heatmap", "figure"), Output("box-scatter", "figure"),
     Input("facility", "value"), Input("dates", "start_date"), Input("dates", "end_date"),
     Input("defect", "value"), Input("d99", "value"))
 def update(facilities, start_date, end_date, defect_types, d99=None):
     view = build_view(LOGS, facilities, start_date, end_date, defect_types,
-                      SETTINGS.process_ms_threshold, SPIKES, exclude_d99="exclude" in (d99 or []))
+                      SETTINGS.process_ms_threshold, SPIKES, exclude_d99="exclude" in (d99 or []),
+                      settings=SETTINGS)
     s = view["summary"]
     cards = [summary_card("검사 수", f"{s['total']:,}"),
              summary_card("불량 수", f"{s['defects']:,}"),
@@ -184,7 +224,8 @@ def update(facilities, start_date, end_date, defect_types, d99=None):
              summary_card("이상 기록", f"{s['anomalies']:,}")]
     return (cards, view["bar"], view["line"],
             make_table(view["table"], "t-defect"), make_table(view["anomalies"], "t-anomaly"),
-            make_table(view["spikes"], "t-spike"))
+            make_table(view["spikes"], "t-spike"),
+            make_table(view["box_table"], "t-box"), view["box_heatmap"], view["box_scatter"])
 
 
 if __name__ == "__main__":
