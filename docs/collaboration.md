@@ -18,6 +18,9 @@ python -m pytest tests -q         # 합친 뒤에도 통과하는지
 
 # ④ PR: 작은 단위로 자주. 오래 열어 둔 PR일수록 충돌이 커진다
 git push -u origin feat/기능이름
+
+# ⑤ 머지: squash merge 후 브랜치를 바로 삭제한다 (gh pr merge --squash --delete-branch)
+#    squash된 브랜치는 main의 조상이 아니어서, 남겨 두면 sync_check가 '작업 중인 브랜치'로 오인한다
 ```
 
 `sync_check.sh`는 작업 트리를 바꾸지 않는다(`git merge-tree`로 가상 병합만 한다). 종료 코드 1이면 충돌이 예상된다는 뜻이다.
