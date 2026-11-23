@@ -7,7 +7,7 @@
 | 도구 | 용도 |
 |---|---|
 | Claude Code | 설계, 코드와 테스트 작성, 실행 검증, Git/PR 작업 |
-| oh-my-claudecode 스킬 4개 (tdd, review, verify, technical-writing) | 98개 스킬 중 이 프로젝트에 필요한 것만 내용을 읽어 본 뒤 가져옴. 출처는 [ATTRIBUTION.md](ATTRIBUTION.md) |
+| oh-my-claudecode 스킬 9개 (tdd, review, verify, technical-writing, execute, minimal-code-discipline, blast-radius, fix-merge-conflicts, what-did-i-get-done) | 프로젝트에 필요한 것만 내용을 읽어 본 뒤 가져옴. 뒤의 5개는 협업 고도화 단계에서 추가(구현·영향 분석·충돌 해결·작업 요약용). 출처는 [ATTRIBUTION.md](ATTRIBUTION.md) |
 
 ## 기능별 기록
 
