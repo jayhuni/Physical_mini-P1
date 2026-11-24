@@ -8,6 +8,7 @@
 | [devlog/](devlog/) | 작업(PR)마다 한 파일. 문제 → 판단 → 한 일 → 검증 → 포트폴리오 포인트 |
 | [decisions/](decisions/) | 설계 결정 기록(ADR). 왜 그렇게 했는지 |
 | [presentation.md](presentation.md) | 발표 구성안(10분), 데이터 특이 사항 근거, 예상 질문과 답 |
+| [desk-demo.md](desk-demo.md) | 자리 설명용 대본(3분): 대시보드 하나로 설명하는 순서와 한 줄 답 |
 
 ## 작업 기록 목록
 
